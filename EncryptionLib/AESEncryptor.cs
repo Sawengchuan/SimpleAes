@@ -98,9 +98,11 @@ namespace EncryptionLib
         /// <param name="FilePath"></param>
         /// <param name="Password"></param>
         /// <returns></returns>
-        public async Task<bool> EncryptFile(string FilePath, string Password)
+        public async Task<Result> EncryptFile(string FilePath, string Password)
         {
             List<string> toBeCleanUpfiles = new List<string>();
+
+            Result result = new Result();
 
             string fileNameWithoutExt;
             string workingFileNameWithoutExt;
@@ -402,10 +404,19 @@ namespace EncryptionLib
 
                 RenameToOriginalFile(base64_file_Path, OriginalSourceFile);
 
+                result.Success = true;
+                result.NewFIlePath = OriginalSourceFile;
+                result.OldFilePath = RenamedSourceFile;
+
             }
             catch
             {
                 RenameToOriginalFile(RenamedSourceFile, OriginalSourceFile);
+
+                result.Success = false;
+                result.NewFIlePath = OriginalSourceFile;
+                result.OldFilePath = OriginalSourceFile;
+
                 throw;
             }
             finally
@@ -415,7 +426,7 @@ namespace EncryptionLib
 
 
 
-            return true;
+            return result;
         }
 
         private void SetupAes(string Password, bool fromInternal = true)
@@ -539,9 +550,10 @@ namespace EncryptionLib
             }
         }
 
-        public async Task DecryptFile(string FilePath, string Password)
+        public async Task<Result> DecryptFile(string FilePath, string Password)
         {
 
+            Result result = new Result();
 
             FileInfo originalFi = new FileInfo(FilePath);
 
@@ -742,6 +754,10 @@ namespace EncryptionLib
 
                             RenameToOriginalFile(final_decrypted_FilePath, FilePath);
 
+                            result.Success = true;
+                            result.OldFilePath = RenamedSourceFile;
+                            result.NewFIlePath = FilePath;
+
                         }
                     }
 
@@ -753,6 +769,10 @@ namespace EncryptionLib
             {
                 RenameToOriginalFile(RenamedSourceFile, FilePath);
 
+                result.Success = false;
+                result.OldFilePath = FilePath;
+                result.NewFIlePath = FilePath;
+
                 throw;
             }
             finally
@@ -760,7 +780,7 @@ namespace EncryptionLib
                 CleanUp(toBeCleanUpfiles);
             }
 
-
+            return result;
         }
 
         byte[] GenerateRandomBytes(int numberOfBytes)
