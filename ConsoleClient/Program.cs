@@ -24,6 +24,8 @@ try
     Console.WriteLine("Starting to encrypt/decrypt!");
 
     await encryptor.EncryptFile(file, password);
+
+    encryptor = new AesEncryptor();
     await encryptor.DecryptFile(file, password);
 
     Console.WriteLine("Hello, World!");

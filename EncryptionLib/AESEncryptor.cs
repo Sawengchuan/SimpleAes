@@ -114,6 +114,7 @@ namespace EncryptionLib
                 VerifyFilePath(originalFi);
                 VerifyPassword(Password);
 
+                PasswordIterationCount = RandomNumberGenerator.GetInt32(10_000, 100_000);
                 SetupAes(Password);
 
 
