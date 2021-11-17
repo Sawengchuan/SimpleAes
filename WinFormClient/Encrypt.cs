@@ -1,25 +1,25 @@
 ﻿using EncryptionLib;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace WinFormClient
 {
     public partial class Encrypt : Form
     {
+        TableLayoutPanel tblTable = new TableLayoutPanel();
+
         public Encrypt()
         {
             InitializeComponent();
+
+            openFileDialog1.Title = "Choose file to encrypt";
+            openFileDialog1.FileName = String.Empty;
+
+            tblTable.Dock = DockStyle.Fill;
+            groupBox1.Controls.Add(tblTable);
         }
 
         private void btnOpenFile_Click(object sender, EventArgs e)
         {
+
             var result = openFileDialog1.ShowDialog(this);
 
             if (result == DialogResult.OK)
@@ -42,28 +42,42 @@ namespace WinFormClient
 
                 try
                 {
-                    tbResult.Text = "";
-
                     var result = await aes.EncryptFile(FileName, Password);
 
-                    if (result.Success)
-                    {
-                        tbResult.Text = "Success" + Environment.NewLine;
-                        tbResult.Text += $"Encrypted file: {result.NewFIlePath}" + Environment.NewLine;
-                        tbResult.Text += $"Backup file: {result.OldFilePath}" + Environment.NewLine;
-                    }
+                    TableDrawerHelper.Draw(groupBox1, tblTable, result);
 
                 }
                 catch (Exception ex)
                 {
-                    tbResult.Text = "Failed" + Environment.NewLine;
-                    tbResult.Text += ex.Message;
+                    TableDrawerHelper.Draw(groupBox1, tblTable, ex);
                 }
             }
             else
             {
-                tbResult.Text = "File and password needed";
+                List<string> list = new List<string>() { "File and password needed" };
+
+                TableDrawerHelper.Draw(groupBox1, tblTable, list);
             }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            tblTable.Controls.Clear();
+        }
+
+        private void btnCopy_Click(object sender, EventArgs e)
+        {
+            var result = string.Empty;
+            foreach(var ctrl in tblTable.Controls)
+            {
+                if(ctrl is Label)
+                {
+                    result += (ctrl as Label).Text + Environment.NewLine;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(result?.Trim()))
+                Clipboard.SetText(result);
         }
     }
 }

@@ -1,6 +1,3 @@
-using System.Drawing.Drawing2D;
-using EncryptionLib;
-
 namespace WinFormClient
 {
     public partial class Form1 : Form
@@ -9,6 +6,7 @@ namespace WinFormClient
         Home home = new Home() { TopLevel = false };
         Encrypt encrypt = new Encrypt() { TopLevel = false };
         Decrypt decrypt = new Decrypt() { TopLevel = false };
+        Credit credit = new Credit() { TopLevel = false };
 
         public Form1()
         {
@@ -18,32 +16,37 @@ namespace WinFormClient
 
             this.Width = 800;
             this.Height = 600;
-
-
         }
 
-        private void set_background(object? sender, PaintEventArgs e)
+        void LoadForm<T>(Control owner, T form) where T : Form
         {
-            Graphics graphics = e.Graphics;
-
-            //the rectangle, the same size as our Form
-            Rectangle gradient_rectangle = new Rectangle(0, 0, Width, Height);
-
-            //define gradient's properties
-            Brush b = new LinearGradientBrush(gradient_rectangle, Color.FromArgb(0, 0, 0), Color.FromArgb(57, 128, 227), 65f);
-            b = new LinearGradientBrush(gradient_rectangle, Color.FromArgb(192, 255, 255), Color.FromArgb(255, 255, 255), 65f);
-
-            //apply gradient         
-            graphics.FillRectangle(b, gradient_rectangle);
-
+            owner.Controls.Clear();
+            owner.Controls.Add(form);
+            form.Dock = DockStyle.Fill;
+            form.Show();
         }
+
+        //private void set_background(object? sender, PaintEventArgs e)
+        //{
+        //    Graphics graphics = e.Graphics;
+
+        //    //the rectangle, the same size as our Form
+        //    Rectangle gradient_rectangle = new Rectangle(0, 0, Width, Height);
+
+        //    //define gradient's properties
+        //    Brush b = new LinearGradientBrush(gradient_rectangle, Color.FromArgb(0, 0, 0), Color.FromArgb(57, 128, 227), 65f);
+        //    b = new LinearGradientBrush(gradient_rectangle, Color.FromArgb(192, 255, 255), Color.FromArgb(255, 255, 255), 65f);
+
+        //    //apply gradient         
+        //    graphics.FillRectangle(b, gradient_rectangle);
+
+        //}
 
 
 
         private void Form1_ResizeEnd(object sender, EventArgs e)
         {
             this.Invalidate();
-
         }
 
 
@@ -51,41 +54,28 @@ namespace WinFormClient
         {
             pnlContent.Visible = true;
             pnlContent.Dock = DockStyle.Fill;
-            pnlContent.Controls.Clear();
-            pnlContent.Controls.Add(home);
-            home.Dock = DockStyle.Fill;
-            home.Show();
+
+            LoadForm(pnlContent, home);
         }
 
         private void btnAbout_Click(object sender, EventArgs e)
         {
-            pnlContent.Controls.Clear();
-            pnlContent.Controls.Add(about);
-            pnlContent.Dock = DockStyle.Fill;
-            pnlContent.Visible = true;
-            about.Dock = DockStyle.Fill;
-            about.Show();
+            LoadForm(pnlContent, about);
         }
 
         private void btnGoEncrypt_Click(object sender, EventArgs e)
         {
-            pnlContent.Controls.Clear();
-            pnlContent.Controls.Add(encrypt);
-            pnlContent.Dock = DockStyle.Fill;
-            pnlContent.Visible = true;
-            encrypt.Dock = DockStyle.Fill;
-            encrypt.Show();
+            LoadForm(pnlContent, encrypt);
         }
 
         private void btnGoDecrypt_Click(object sender, EventArgs e)
         {
-            pnlContent.Controls.Clear();
+            LoadForm(pnlContent, decrypt);
+        }
 
-            pnlContent.Controls.Add(decrypt);
-            pnlContent.Dock = DockStyle.Fill;
-            pnlContent.Visible = true;
-            decrypt.Dock = DockStyle.Fill;
-            decrypt.Show();
+        private void btnGoCredit_Click(object sender, EventArgs e)
+        {
+            LoadForm(pnlContent, credit);
         }
     }
 }

@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btnGoCredit = new System.Windows.Forms.Button();
             this.btnAbout = new System.Windows.Forms.Button();
             this.btnGoDecrypt = new System.Windows.Forms.Button();
             this.btnGoEncrypt = new System.Windows.Forms.Button();
@@ -51,6 +52,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.btnGoCredit);
             this.splitContainer1.Panel1.Controls.Add(this.btnAbout);
             this.splitContainer1.Panel1.Controls.Add(this.btnGoDecrypt);
             this.splitContainer1.Panel1.Controls.Add(this.btnGoEncrypt);
@@ -63,6 +65,20 @@
             this.splitContainer1.Size = new System.Drawing.Size(884, 441);
             this.splitContainer1.SplitterDistance = 120;
             this.splitContainer1.TabIndex = 5;
+            // 
+            // btnGoCredit
+            // 
+            this.btnGoCredit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnGoCredit.FlatAppearance.BorderSize = 2;
+            this.btnGoCredit.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
+            this.btnGoCredit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnGoCredit.Location = new System.Drawing.Point(12, 354);
+            this.btnGoCredit.Name = "btnGoCredit";
+            this.btnGoCredit.Size = new System.Drawing.Size(95, 34);
+            this.btnGoCredit.TabIndex = 3;
+            this.btnGoCredit.Text = "Credit";
+            this.btnGoCredit.UseVisualStyleBackColor = true;
+            this.btnGoCredit.Click += new System.EventHandler(this.btnGoCredit_Click);
             // 
             // btnAbout
             // 
@@ -140,5 +156,6 @@
         private Button btnGoEncrypt;
         private Button btnAbout;
         private Panel pnlContent;
+        private Button btnGoCredit;
     }
 }

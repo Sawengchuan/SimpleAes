@@ -103,6 +103,7 @@ namespace EncryptionLib
             List<string> toBeCleanUpfiles = new List<string>();
 
             Result result = new Result();
+            result.CryptoOp = CryptoOp.Encrypt;
 
             string fileNameWithoutExt;
             string workingFileNameWithoutExt;
@@ -554,6 +555,7 @@ namespace EncryptionLib
         {
 
             Result result = new Result();
+            result.CryptoOp = CryptoOp.Decrypt;
 
             FileInfo originalFi = new FileInfo(FilePath);
 

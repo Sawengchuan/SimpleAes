@@ -1,21 +1,21 @@
 ﻿using EncryptionLib;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace WinFormClient
 {
     public partial class Decrypt : Form
     {
+        TableLayoutPanel tblTable = new TableLayoutPanel();
+
         public Decrypt()
         {
             InitializeComponent();
+
+            openFileDialog1.Title = "Choose file to decrypt";
+            openFileDialog1.FileName = String.Empty;
+
+            tblTable.Dock = DockStyle.Fill;
+            groupBox2.Controls.Add(tblTable);
+
         }
 
         private void btnOpenFileDecrypt_Click(object sender, EventArgs e)
@@ -42,28 +42,44 @@ namespace WinFormClient
 
                 try
                 {
-                    tbResultDecrypt.Text = "";
 
                     var result = await aes.DecryptFile(FileName, Password);
 
-                    if (result.Success)
-                    {
-                        tbResultDecrypt.Text = "Success" + Environment.NewLine;
-                        tbResultDecrypt.Text += $"Encrypted file: {result.NewFIlePath}" + Environment.NewLine;
-                        tbResultDecrypt.Text += $"Backup file: {result.OldFilePath}" + Environment.NewLine;
-                    }
+                    TableDrawerHelper.Draw(groupBox2, tblTable, result);
 
                 }
                 catch (Exception ex)
                 {
-                    tbResultDecrypt.Text = "Failed" + Environment.NewLine;
-                    tbResultDecrypt.Text += ex.Message;
+                    TableDrawerHelper.Draw(groupBox2, tblTable, ex);
                 }
             }
             else
             {
-                tbResultDecrypt.Text = "File and password needed";
+                List<string> list = new List<string>() { "File and password needed" };
+
+                TableDrawerHelper.Draw(groupBox2, tblTable, list);
+
             }
+        }
+
+        private void btnCopy_Click(object sender, EventArgs e)
+        {
+            var result = string.Empty;
+            foreach (var ctrl in tblTable.Controls)
+            {
+                if (ctrl is Label)
+                {
+                    result += (ctrl as Label).Text + Environment.NewLine;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(result?.Trim()))
+                Clipboard.SetText(result);
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            tblTable.Controls.Clear();
         }
     }
 }

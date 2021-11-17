@@ -30,7 +30,6 @@
         {
             this.pnlDecrypt = new System.Windows.Forms.Panel();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.tbResultDecrypt = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.tbPasswordDecrypt = new System.Windows.Forms.TextBox();
             this.btnDecrypt = new System.Windows.Forms.Button();
@@ -38,12 +37,15 @@
             this.label9 = new System.Windows.Forms.Label();
             this.lblSelectedFileDecrypt = new System.Windows.Forms.Label();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.btnClear = new System.Windows.Forms.Button();
+            this.btnCopy = new System.Windows.Forms.Button();
             this.pnlDecrypt.SuspendLayout();
-            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlDecrypt
             // 
+            this.pnlDecrypt.Controls.Add(this.btnClear);
+            this.pnlDecrypt.Controls.Add(this.btnCopy);
             this.pnlDecrypt.Controls.Add(this.groupBox2);
             this.pnlDecrypt.Controls.Add(this.label8);
             this.pnlDecrypt.Controls.Add(this.tbPasswordDecrypt);
@@ -64,7 +66,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox2.BackColor = System.Drawing.Color.Transparent;
-            this.groupBox2.Controls.Add(this.tbResultDecrypt);
             this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.groupBox2.ForeColor = System.Drawing.Color.LawnGreen;
             this.groupBox2.Location = new System.Drawing.Point(19, 161);
@@ -73,19 +74,6 @@
             this.groupBox2.TabIndex = 12;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Status";
-            // 
-            // tbResultDecrypt
-            // 
-            this.tbResultDecrypt.BackColor = System.Drawing.Color.Black;
-            this.tbResultDecrypt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.tbResultDecrypt.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tbResultDecrypt.ForeColor = System.Drawing.Color.Lime;
-            this.tbResultDecrypt.Location = new System.Drawing.Point(3, 19);
-            this.tbResultDecrypt.Multiline = true;
-            this.tbResultDecrypt.Name = "tbResultDecrypt";
-            this.tbResultDecrypt.ReadOnly = true;
-            this.tbResultDecrypt.Size = new System.Drawing.Size(678, 277);
-            this.tbResultDecrypt.TabIndex = 7;
             // 
             // label8
             // 
@@ -156,6 +144,32 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
+            // btnClear
+            // 
+            this.btnClear.FlatAppearance.BorderSize = 2;
+            this.btnClear.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
+            this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClear.Location = new System.Drawing.Point(181, 116);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(50, 28);
+            this.btnClear.TabIndex = 17;
+            this.btnClear.Text = "Clear";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
+            // btnCopy
+            // 
+            this.btnCopy.FlatAppearance.BorderSize = 2;
+            this.btnCopy.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
+            this.btnCopy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCopy.Location = new System.Drawing.Point(125, 116);
+            this.btnCopy.Name = "btnCopy";
+            this.btnCopy.Size = new System.Drawing.Size(50, 28);
+            this.btnCopy.TabIndex = 16;
+            this.btnCopy.Text = "Copy";
+            this.btnCopy.UseVisualStyleBackColor = true;
+            this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
+            // 
             // Decrypt
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -168,8 +182,6 @@
             this.Text = "Decrypt";
             this.pnlDecrypt.ResumeLayout(false);
             this.pnlDecrypt.PerformLayout();
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -178,7 +190,6 @@
 
         private Panel pnlDecrypt;
         private GroupBox groupBox2;
-        private TextBox tbResultDecrypt;
         private Label label8;
         private TextBox tbPasswordDecrypt;
         private Button btnDecrypt;
@@ -186,5 +197,7 @@
         private Label label9;
         private Label lblSelectedFileDecrypt;
         private OpenFileDialog openFileDialog1;
+        private Button btnClear;
+        private Button btnCopy;
     }
 }

@@ -8,6 +8,7 @@ namespace EncryptionLib
 {
     public class Result
     {
+        public CryptoOp CryptoOp { get; set; }
         public bool Success { get; set; }
         public string Message { get; set; }
         public string OldFilePath { get; set; }

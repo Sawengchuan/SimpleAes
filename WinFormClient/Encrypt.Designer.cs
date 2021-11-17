@@ -30,7 +30,6 @@
         {
             this.panel1 = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.tbResult = new System.Windows.Forms.TextBox();
             this.tbPassword = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.lblSelectedFile = new System.Windows.Forms.Label();
@@ -38,12 +37,15 @@
             this.btnEncrypt = new System.Windows.Forms.Button();
             this.btnOpenFile = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.btnCopy = new System.Windows.Forms.Button();
+            this.btnClear = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
-            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.btnClear);
+            this.panel1.Controls.Add(this.btnCopy);
             this.panel1.Controls.Add(this.groupBox1);
             this.panel1.Controls.Add(this.tbPassword);
             this.panel1.Controls.Add(this.label6);
@@ -64,7 +66,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackColor = System.Drawing.Color.Transparent;
-            this.groupBox1.Controls.Add(this.tbResult);
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.groupBox1.ForeColor = System.Drawing.Color.LawnGreen;
             this.groupBox1.Location = new System.Drawing.Point(17, 157);
@@ -73,19 +74,6 @@
             this.groupBox1.TabIndex = 13;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Status";
-            // 
-            // tbResult
-            // 
-            this.tbResult.BackColor = System.Drawing.Color.Black;
-            this.tbResult.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.tbResult.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tbResult.ForeColor = System.Drawing.Color.Lime;
-            this.tbResult.Location = new System.Drawing.Point(3, 19);
-            this.tbResult.Multiline = true;
-            this.tbResult.Name = "tbResult";
-            this.tbResult.ReadOnly = true;
-            this.tbResult.Size = new System.Drawing.Size(474, 198);
-            this.tbResult.TabIndex = 7;
             // 
             // tbPassword
             // 
@@ -156,6 +144,32 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
+            // btnCopy
+            // 
+            this.btnCopy.FlatAppearance.BorderSize = 2;
+            this.btnCopy.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
+            this.btnCopy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCopy.Location = new System.Drawing.Point(123, 106);
+            this.btnCopy.Name = "btnCopy";
+            this.btnCopy.Size = new System.Drawing.Size(50, 28);
+            this.btnCopy.TabIndex = 14;
+            this.btnCopy.Text = "Copy";
+            this.btnCopy.UseVisualStyleBackColor = true;
+            this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
+            // 
+            // btnClear
+            // 
+            this.btnClear.FlatAppearance.BorderSize = 2;
+            this.btnClear.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
+            this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClear.Location = new System.Drawing.Point(179, 106);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(50, 28);
+            this.btnClear.TabIndex = 15;
+            this.btnClear.Text = "Clear";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
             // Encrypt
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -168,8 +182,6 @@
             this.Text = "Encrypt";
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -178,7 +190,6 @@
 
         private Panel panel1;
         private GroupBox groupBox1;
-        private TextBox tbResult;
         private Label label6;
         private TextBox tbPassword;
         private Button btnEncrypt;
@@ -186,5 +197,7 @@
         private Label label1;
         private Label lblSelectedFile;
         private OpenFileDialog openFileDialog1;
+        private Button btnClear;
+        private Button btnCopy;
     }
 }

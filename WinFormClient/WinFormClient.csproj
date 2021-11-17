@@ -6,7 +6,12 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>clipart959280.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="clipart959280.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EncryptionLib\EncryptionLib.csproj" />
