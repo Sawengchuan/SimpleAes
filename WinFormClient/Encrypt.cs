@@ -72,7 +72,7 @@ namespace WinFormClient
             {
                 if(ctrl is Label)
                 {
-                    result += (ctrl as Label).Text + Environment.NewLine;
+                    result += ((Label)ctrl).Text + Environment.NewLine;
                 }
             }
 

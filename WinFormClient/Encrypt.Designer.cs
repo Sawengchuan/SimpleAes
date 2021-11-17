@@ -29,6 +29,8 @@
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnClear = new System.Windows.Forms.Button();
+            this.btnCopy = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.tbPassword = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
@@ -37,8 +39,6 @@
             this.btnEncrypt = new System.Windows.Forms.Button();
             this.btnOpenFile = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.btnCopy = new System.Windows.Forms.Button();
-            this.btnClear = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -60,6 +60,32 @@
             this.panel1.Size = new System.Drawing.Size(511, 380);
             this.panel1.TabIndex = 0;
             // 
+            // btnClear
+            // 
+            this.btnClear.FlatAppearance.BorderSize = 2;
+            this.btnClear.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
+            this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClear.Location = new System.Drawing.Point(179, 106);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(50, 28);
+            this.btnClear.TabIndex = 15;
+            this.btnClear.Text = "Clear";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
+            // btnCopy
+            // 
+            this.btnCopy.FlatAppearance.BorderSize = 2;
+            this.btnCopy.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
+            this.btnCopy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCopy.Location = new System.Drawing.Point(123, 106);
+            this.btnCopy.Name = "btnCopy";
+            this.btnCopy.Size = new System.Drawing.Size(50, 28);
+            this.btnCopy.TabIndex = 14;
+            this.btnCopy.Text = "Copy";
+            this.btnCopy.UseVisualStyleBackColor = true;
+            this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
+            // 
             // groupBox1
             // 
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -70,7 +96,7 @@
             this.groupBox1.ForeColor = System.Drawing.Color.LawnGreen;
             this.groupBox1.Location = new System.Drawing.Point(17, 157);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(480, 220);
+            this.groupBox1.Size = new System.Drawing.Size(480, 211);
             this.groupBox1.TabIndex = 13;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Status";
@@ -143,32 +169,6 @@
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
-            // 
-            // btnCopy
-            // 
-            this.btnCopy.FlatAppearance.BorderSize = 2;
-            this.btnCopy.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
-            this.btnCopy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCopy.Location = new System.Drawing.Point(123, 106);
-            this.btnCopy.Name = "btnCopy";
-            this.btnCopy.Size = new System.Drawing.Size(50, 28);
-            this.btnCopy.TabIndex = 14;
-            this.btnCopy.Text = "Copy";
-            this.btnCopy.UseVisualStyleBackColor = true;
-            this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
-            // 
-            // btnClear
-            // 
-            this.btnClear.FlatAppearance.BorderSize = 2;
-            this.btnClear.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
-            this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClear.Location = new System.Drawing.Point(179, 106);
-            this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(50, 28);
-            this.btnClear.TabIndex = 15;
-            this.btnClear.Text = "Clear";
-            this.btnClear.UseVisualStyleBackColor = true;
-            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
             // 
             // Encrypt
             // 

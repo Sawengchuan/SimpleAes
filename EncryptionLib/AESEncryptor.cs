@@ -544,7 +544,7 @@ namespace EncryptionLib
                     if (fi.Exists)
                         File.Delete(fi.FullName);
                 }
-                catch (Exception ex)
+                catch
                 {
 
                 }
