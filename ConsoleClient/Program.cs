@@ -54,61 +54,61 @@ try
     var b2 = new byte[] { 11, 12, 13, 14 };
     var b3 = new byte[] { 21, 22, 23, 24, 25 };
 
-    var resultt = HeaderHelper.GenerateHeader(200, b1, b2, b3);
+    //var merged = HeaderHelper.GenerateHeader(200, b1, b2, b3);
 
 
-    var aggByteSpan = resultt.Aggregate((x, y) =>
-    {
-        var agg = new byte[x.Length + y.Length];
+    //var aggByteSpan = resultt.Aggregate((x, y) =>
+    //{
+    //    var agg = new byte[x.Length + y.Length];
 
-        var span = new Span<byte>(agg);
+    //    var span = new Span<byte>(agg);
 
-        x.AsSpan().CopyTo(span.Slice(0));
-        y.AsSpan().CopyTo(span.Slice(x.Length));
+    //    x.AsSpan().CopyTo(span.Slice(0));
+    //    y.AsSpan().CopyTo(span.Slice(x.Length));
 
-        return agg;
-    });
+    //    return agg;
+    //});
 
 
 
-    var aggByte = resultt.Aggregate((x, y) =>
-    {
-        var agg = new byte[x.Length + y.Length];
-        x.CopyTo(agg, 0);
-        y.CopyTo(agg, x.Length);
+    //var aggByte = resultt.Aggregate((x, y) =>
+    //{
+    //    var agg = new byte[x.Length + y.Length];
+    //    x.CopyTo(agg, 0);
+    //    y.CopyTo(agg, x.Length);
 
-        return agg;
-    });
+    //    return agg;
+    //});
 
 
 
 
     // span foreach loop way
-    var totalXtra = resultt.Sum(b => b.Length);
-    var merged = new byte[totalXtra];
-    var span = new Span<byte>(merged);
+    //var totalXtra = resultt.Sum(b => b.Length);
+    //var merged = new byte[totalXtra];
+    //var span = new Span<byte>(merged);
 
     int runningIndex = 0;
-    foreach (var x in resultt)
-    {
-        //x.CopyTo(merged, runningIndex);
+    //foreach (var x in resultt)
+    //{
+    //    //x.CopyTo(merged, runningIndex);
 
-        x.AsSpan().CopyTo(span.Slice(runningIndex, x.Length));
+    //    x.AsSpan().CopyTo(span.Slice(runningIndex, x.Length));
 
-        runningIndex += x.Length;
+    //    runningIndex += x.Length;
 
-    }
-    // span old way
+    //}
+    //// span old way
 
-    for (int i = 0; i < resultt.Length; i++)
-        resultt.AsSpan()[i..1][0].CopyTo(merged, i);
+    //for (int i = 0; i < resultt.Length; i++)
+    //    resultt.AsSpan()[i..1][0].CopyTo(merged, i);
 
     //resultt.Aggregate()
 
 
 
-    using (var stream = File.Create(@"E:\temp\tempWrite.txt"))
-        stream.Write(merged);
+    //using (var stream = File.Create(@"E:\temp\tempWrite.txt"))
+    //    stream.Write(merged);
 
         Console.WriteLine("Hello, World!");
 }

@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace EncryptionLib.Header
 {
-    internal class CustomHeader : IHeaderStrategy
+    internal class AesCustomHeader : IHeaderStrategy
     {
+        public const byte ID = 201;
         struct SlotData
         {
             public byte Size;
@@ -26,7 +27,7 @@ namespace EncryptionLib.Header
                 }
             }
         }
-        public byte[][] GenerateHeader(params byte[][] secrets)
+        byte[] GenerateHeader(params byte[][] secrets)
         {
             int MaxSlot = RandomNumberGenerator.GetInt32(5, 10);
 
@@ -62,8 +63,9 @@ namespace EncryptionLib.Header
 
             //byte[] totalSecret = new byte[] { (byte)(vs.Length - 1) };
 
-            // pattern : haskKey (37) + totalsecret (32) + lucky number(s) + slot
+            // pattern : HeaderID + haskKey (37) + totalsecret (32) + lucky number(s) + slot
 
+            header.Add(new byte[] { ID }); // 1 byte
             header.Add(hashKey); // 37 byte
             header.Add(hmac.ComputeHash(new byte[] { (byte)(secrets.Length) })); // 32 byte
             luckyNumber.ForEach(n => header.Add(hmac.ComputeHash(new byte[] { (byte)n }))); // 32byte foreach
@@ -101,10 +103,20 @@ namespace EncryptionLib.Header
                 }
             }
 
-            return header.ToArray();
+            var headerByte = header.ToArray().Aggregate((x, y) =>
+            {
+                var agg = new byte[x.Length + y.Length];
+                x.CopyTo(agg, 0);
+                y.CopyTo(agg, x.Length);
+
+                return agg;
+            });
+
+            return headerByte;
+            //return header.ToArray();
         }
 
-        public HeaderProfile ReadHeader(Stream stream)
+        public async Task<HeaderProfile> ReadHeader(Stream stream)
         {
             List<byte[]> list = new List<byte[]>();
 
@@ -139,6 +151,11 @@ namespace EncryptionLib.Header
 
             return dict;
 
+        }
+
+        public byte[] GenerateHeader(HeaderProfile profile)
+        {
+            throw new NotImplementedException();
         }
     }
 }

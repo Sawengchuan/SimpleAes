@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EncryptionLib.Header;
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,18 +18,15 @@ namespace EncryptionLib.Encryptor
 
     public class AesEncryptor : ISymmetricEncryptor
     {
-        private const int AesBlockByteSize = 128 / 8;
+        internal const int AesBlockByteSize = 128 / 8;
 
-        private const int PasswordSaltByteSize = 128 / 8;
-        private const int PasswordByteSize = 256 / 8;
-        private const int IterationNumberByteSize = 32 / 8;
+        internal const int PasswordSaltByteSize = 128 / 8;
+        internal const int PasswordByteSize = 256 / 8;
+        internal const int IterationNumberByteSize = 32 / 8;
 
+        internal const int DefaultPasswordIterationCount = 100_000;
 
-
-        private const int DefaultPasswordIterationCount = 100_000;
-
-        private const int SignatureByteSize = 512 / 8;
-
+        internal const int SignatureByteSize = 512 / 8;
 
 
         private const int MinimumEncryptedMessageByteSize =
@@ -71,9 +69,7 @@ namespace EncryptionLib.Encryptor
 
             //PasswordIterationCount = DefaultPasswordIterationCount;
             PasswordIterationCount = RandomNumberGenerator.GetInt32(10_000, 100_000);
-
         }
-
 
         Aes CreateAes()
         {
@@ -83,18 +79,6 @@ namespace EncryptionLib.Encryptor
             return aes;
         }
 
-        private byte[] MergeArrays(params byte[][] arrays)
-        {
-            var merged = new byte[arrays.Sum(a => a.Length)];
-            var mergeIndex = 0;
-            for (int i = 0; i < arrays.GetLength(0); i++)
-            {
-                arrays[i].CopyTo(merged, mergeIndex);
-                mergeIndex += arrays[i].Length;
-            }
-
-            return merged;
-        }
         public async Task<Result> DecryptFile(string FilePath, string Password)
         {
             Result result = new Result();
@@ -181,18 +165,28 @@ namespace EncryptionLib.Encryptor
 
                 //
                 // pattern: SignatureByteSize + authKeySalt + keySalt + iv + cipherText
-                // read from encrypted file: SignatureByteSize + authKeySalt + keySalt + iv
+                // read from encrypted file: SignatureByteSize + authKeySalt + keySalt + iv + iteration number
                 // compute the signature of the cipherText
                 //
 
                 using (FileStream inStream = File.OpenRead(encrypted_file_Path))
                 {
                     // Read in the storedHash.
-                    await inStream.ReadAsync(storedSig, 0, storedSig.Length);
-                    await inStream.ReadAsync(authKeySalt, 0, authKeySalt.Length);
-                    await inStream.ReadAsync(keySalt, 0, keySalt.Length);
-                    await inStream.ReadAsync(iv, 0, iv.Length);
-                    await inStream.ReadAsync(iterationNumber, 0, iterationNumber.Length);
+                    //await inStream.ReadAsync(storedSig, 0, storedSig.Length);
+                    //await inStream.ReadAsync(authKeySalt, 0, authKeySalt.Length);
+                    //await inStream.ReadAsync(keySalt, 0, keySalt.Length);
+                    //await inStream.ReadAsync(iv, 0, iv.Length);
+                    //await inStream.ReadAsync(iterationNumber, 0, iterationNumber.Length);
+
+                    var profile = await HeaderHelper.ReadHeader(inStream);
+
+                    storedSig = profile.StoredSig;
+                    authKeySalt = profile.AuthKeySalt;
+                    keySalt = profile.KeySalt;
+                    iv = profile.IV;
+                    iterationNumber = profile.Iteration;
+
+
 
                     try
                     {
@@ -246,7 +240,7 @@ namespace EncryptionLib.Encryptor
                     }
 
 
-                    byte[] header = MergeArrays(storedSig, authKeySalt, keySalt, iv, iterationNumber);
+                    byte[] header = HeaderHelper.GenerateHeader(profile);
 
                     var decrypted_File = $"{ workingFileNameWithoutExt + source_with_sig_ext}";
                     var decrypted_FilePath = workingFi.FullName.Replace(workingFi.Name, decrypted_File);
@@ -521,7 +515,19 @@ namespace EncryptionLib.Encryptor
                 {
                     byte[] cipherTextSignature = await encryptedFile.HMACSHA512(authKey);
 
-                    byte[] header = MergeArrays(cipherTextSignature, authKeySalt, keySalt, iv, iterationNumber);
+                    //byte[] header = MergeArrays(cipherTextSignature, authKeySalt, keySalt, iv, iterationNumber);
+
+                    HeaderProfile profile = new HeaderProfile 
+                    { 
+                        AuthKeySalt = authKeySalt, 
+                        Iteration = iterationNumber, 
+                        IV = iv, 
+                        KeySalt = keySalt, 
+                        StoredSig = cipherTextSignature 
+                    };
+
+                    var header = HeaderHelper.GenerateHeader(profile);
+
 
                     //finalEncryptedFileWithHeader.Write(header);
                     //await encryptedFile.CopyToAsync(finalEncryptedFileWithHeader);
@@ -663,7 +669,7 @@ namespace EncryptionLib.Encryptor
         {
             try
             {
-                iterationNumber = BitConverter.GetBytes(PasswordIterationCount);
+                iterationNumber = BitConverter.GetBytes(PasswordIterationCount);    
                 if (BitConverter.IsLittleEndian)
                     Array.Reverse(iterationNumber);
 

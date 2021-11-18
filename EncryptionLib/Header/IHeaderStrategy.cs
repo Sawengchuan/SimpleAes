@@ -8,7 +8,7 @@ namespace EncryptionLib.Header
 {
     internal interface IHeaderStrategy
     {
-        public byte[][] GenerateHeader(params byte[][] vs);
-        public HeaderProfile ReadHeader(Stream stream);
+        public byte[] GenerateHeader(HeaderProfile profile);
+        public Task<HeaderProfile> ReadHeader(Stream stream);
     }
 }
