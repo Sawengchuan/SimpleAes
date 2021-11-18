@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EncryptionLib
+namespace EncryptionLib.Header
 {
     internal class RegularHeader : IHeaderStrategy
     {
@@ -13,7 +13,7 @@ namespace EncryptionLib
             throw new NotImplementedException();
         }
 
-        public byte[][] ReadHeader(Stream stream)
+        public HeaderProfile ReadHeader(Stream stream)
         {
             throw new NotImplementedException();
         }

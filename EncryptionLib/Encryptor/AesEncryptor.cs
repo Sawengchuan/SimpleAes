@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EncryptionLib
+namespace EncryptionLib.Encryptor
 {
     //
     // https://tomrucki.com/posts/aes-encryption-in-csharp/
@@ -14,8 +14,8 @@ namespace EncryptionLib
     // https://stackoverflow.com/questions/38623335/aes-encrypt-then-mac-a-large-file-with-net/38629596#38629596
     // https://stackoverflow.com/questions/38623335/aes-encrypt-then-mac-a-large-file-with-net/
     //
-    [Obsolete("Not used anymore", true)]
-    public sealed class AesEncryptor
+
+    public class AesEncryptor : ISymmetricEncryptor
     {
         private const int AesBlockByteSize = 128 / 8;
 
@@ -63,21 +63,6 @@ namespace EncryptionLib
         const string source_with_sig_enc_ext_base64 = ".source_with_sig_encrypted_64";
 
         int PasswordIterationCount;
-
-
-        /*
-         * final pattern of the encrypted file
-
-            SignatureByteSize + authKeySalt + keySalt + iv + IterationNumber + cipherText
-
-
-            var result = MergeArrays(
-                additionalCapacity: SignatureByteSize,
-                authKeySalt, keySalt, iv, IterationNumber, cipherText);
-
-
-        */
-
         public AesEncryptor()
         {
             toBase64 = new ToBase64Transform();
@@ -90,14 +75,259 @@ namespace EncryptionLib
         }
 
 
-        /// <summary>
-        /// MAC-Encrypt-MAC
-        /// Source file rename to <FileName>.old
-        /// Encrypted file name is source file name
-        /// </summary>
-        /// <param name="FilePath"></param>
-        /// <param name="Password"></param>
-        /// <returns></returns>
+        Aes CreateAes()
+        {
+            var aes = Aes.Create();
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
+            return aes;
+        }
+
+        private byte[] MergeArrays(params byte[][] arrays)
+        {
+            var merged = new byte[arrays.Sum(a => a.Length)];
+            var mergeIndex = 0;
+            for (int i = 0; i < arrays.GetLength(0); i++)
+            {
+                arrays[i].CopyTo(merged, mergeIndex);
+                mergeIndex += arrays[i].Length;
+            }
+
+            return merged;
+        }
+        public async Task<Result> DecryptFile(string FilePath, string Password)
+        {
+            Result result = new Result();
+            result.CryptoOp = CryptoOp.Decrypt;
+
+            FileInfo originalFi = new FileInfo(FilePath);
+
+            VerifyFilePath(originalFi);
+            VerifyPassword(Password);
+
+            if (originalFi.Length < MinimumEncryptedMessageByteSize)
+            {
+                throw new ArgumentException("Invalid length of encrypted data");
+            }
+
+            string fileNameWithoutExt = originalFi.Name.Replace(originalFi.Extension, string.Empty);
+            string workingFileNameWithoutExt = $"{ fileNameWithoutExt }_{ Guid.NewGuid() }";
+
+
+            #region rename file
+            // rename source file
+            var OriginalSourceFile = originalFi.FullName;
+            var RenamedSourceFile = Path.Combine(originalFi.DirectoryName ?? string.Empty, workingFileNameWithoutExt + source_with_sig_enc_ext_base64);
+
+
+            try
+            {
+                File.Move(FilePath, RenamedSourceFile);
+            }
+            catch (IOException io)
+            {
+                throw new Exception($"IOException: Unexpected IO error: {io.Message}");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new Exception("UnauthorizedAccessException: No permission to rename file");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Unexpected Error: {ex.Message}");
+            }
+            #endregion
+
+
+            List<string> toBeCleanUpfiles = new List<string>();
+
+            var workingFi = new FileInfo(RenamedSourceFile);
+
+
+            try
+            {
+                var encrypted_File = $"{ workingFileNameWithoutExt + source_with_sig_enc_ext}";
+                var encrypted_file_Path = workingFi.FullName.Replace(workingFi.Name, encrypted_File);
+
+
+                toBeCleanUpfiles.Add(encrypted_file_Path);
+
+                try
+                {
+                    using (FileStream inputFile = File.OpenRead(RenamedSourceFile))
+                    using (FileStream outputFile = File.OpenWrite(encrypted_file_Path))
+                    using (CryptoStream cryptoStream = new CryptoStream(inputFile, fromBase64, CryptoStreamMode.Read))
+                    {
+                        cryptoStream.CopyTo(outputFile, 4096);
+                    }
+                }
+                catch
+                {
+                    throw new Exception("Error during decoding base-64 file");
+                }
+
+
+
+                #region setup -- extract from file
+
+                byte[] storedSig = new byte[new HMACSHA512().HashSize / 8];
+
+                authKeySalt = new byte[PasswordSaltByteSize];
+                keySalt = new byte[PasswordSaltByteSize];
+                iv = new byte[AesBlockByteSize];
+                iterationNumber = new byte[IterationNumberByteSize];
+
+                #endregion
+
+                //
+                // pattern: SignatureByteSize + authKeySalt + keySalt + iv + cipherText
+                // read from encrypted file: SignatureByteSize + authKeySalt + keySalt + iv
+                // compute the signature of the cipherText
+                //
+
+                using (FileStream inStream = File.OpenRead(encrypted_file_Path))
+                {
+                    // Read in the storedHash.
+                    await inStream.ReadAsync(storedSig, 0, storedSig.Length);
+                    await inStream.ReadAsync(authKeySalt, 0, authKeySalt.Length);
+                    await inStream.ReadAsync(keySalt, 0, keySalt.Length);
+                    await inStream.ReadAsync(iv, 0, iv.Length);
+                    await inStream.ReadAsync(iterationNumber, 0, iterationNumber.Length);
+
+                    try
+                    {
+                        PasswordIterationCount = BinaryPrimitives.ReadInt32BigEndian(iterationNumber);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Bad data for iteration number: {ex.Message}");
+                    }
+
+
+                    try
+                    {
+                        key = GetKey(Password, keySalt);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Bad data for key creation: {ex.Message}");
+                    }
+
+                    try
+                    {
+                        authKey = GetKey(Password, authKeySalt);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Bad data for signature key creation: {ex.Message}");
+                    }
+
+                    try
+                    {
+                        decryptor = aes.CreateDecryptor(key, iv);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Bad data for decryptor creation: {ex.Message}");
+                    }
+
+                    //SetupAes(Password, false);
+
+                    byte[] computedHash;
+
+                    computedHash = await inStream.HMACSHA512(authKey, inStream.Position);
+
+                    for (int i = 0; i < storedSig.Length; i++)
+                    {
+                        if (computedHash[i] != storedSig[i])
+                        {
+                            throw new Exception("Encrypted file integrity failed: Signature not matched");
+                        }
+                    }
+
+
+                    byte[] header = MergeArrays(storedSig, authKeySalt, keySalt, iv, iterationNumber);
+
+                    var decrypted_File = $"{ workingFileNameWithoutExt + source_with_sig_ext}";
+                    var decrypted_FilePath = workingFi.FullName.Replace(workingFi.Name, decrypted_File);
+
+                    toBeCleanUpfiles.Add(decrypted_FilePath);
+
+                    using (var decryptedFileStream = File.Create(decrypted_FilePath))
+                    using (var decryptCryptoStream = new CryptoStream(inStream, decryptor, CryptoStreamMode.Read))
+                    {
+                        inStream.Position = header.Length;
+                        await decryptCryptoStream.CopyToAsync(decryptedFileStream);
+                    }
+
+                    using (HMACSHA512 hmac = new HMACSHA512(authKey))
+                    {
+                        // Create an array to hold the keyed hash value read from the file.
+                        byte[] storedPlainHash = new byte[hmac.HashSize / 8];
+                        // Create a FileStream for the source file.
+                        using (FileStream sourceFileWithSig = File.OpenRead(decrypted_FilePath))
+                        {
+                            // Read in the storedHash.
+                            await sourceFileWithSig.ReadAsync(storedPlainHash, 0, storedPlainHash.Length);
+                            // Compute the hash of the remaining contents of the file.
+                            // The stream is properly positioned at the beginning of the content, 
+                            // immediately after the stored hash value.
+                            byte[] computedPlainHash; // = hmac.ComputeHash(inStream);
+
+                            computedPlainHash = await sourceFileWithSig.HMACSHA512(authKey, sourceFileWithSig.Position);
+                            // compare the computed hash with the stored value
+
+                            for (int i = 0; i < storedPlainHash.Length; i++)
+                            {
+                                if (computedPlainHash[i] != storedPlainHash[i])
+                                {
+                                    throw new Exception("File integrity failed: Signature not matched");
+
+                                }
+                            }
+
+                            var final_decrypted_File = $"{ workingFileNameWithoutExt + source_ext}";
+                            var final_decrypted_FilePath = workingFi.FullName.Replace(workingFi.Name, final_decrypted_File);
+
+
+                            using (var finalDecryptedFileStream = File.Create(final_decrypted_FilePath))
+                            {
+                                sourceFileWithSig.Position = storedPlainHash.Length;
+                                await sourceFileWithSig.CopyToAsync(finalDecryptedFileStream);
+
+                            }
+
+                            RenameToOriginalFile(final_decrypted_FilePath, FilePath);
+
+                            result.Success = true;
+                            result.OldFilePath = RenamedSourceFile;
+                            result.NewFIlePath = FilePath;
+
+                        }
+                    }
+
+
+                }
+
+            }
+            catch
+            {
+                RenameToOriginalFile(RenamedSourceFile, FilePath);
+
+                result.Success = false;
+                result.OldFilePath = FilePath;
+                result.NewFIlePath = FilePath;
+
+                throw;
+            }
+            finally
+            {
+                CleanUp(toBeCleanUpfiles);
+            }
+
+            return result;
+        }
+
         public async Task<Result> EncryptFile(string FilePath, string Password)
         {
             List<string> toBeCleanUpfiles = new List<string>();
@@ -429,7 +659,6 @@ namespace EncryptionLib
 
             return result;
         }
-
         private void SetupAes(string Password, bool fromInternal = true)
         {
             try
@@ -550,241 +779,6 @@ namespace EncryptionLib
                 }
             }
         }
-
-        public async Task<Result> DecryptFile(string FilePath, string Password)
-        {
-
-            Result result = new Result();
-            result.CryptoOp = CryptoOp.Decrypt;
-
-            FileInfo originalFi = new FileInfo(FilePath);
-
-            VerifyFilePath(originalFi);
-            VerifyPassword(Password);
-
-            if (originalFi.Length < MinimumEncryptedMessageByteSize)
-            {
-                throw new ArgumentException("Invalid length of encrypted data");
-            }
-
-            string fileNameWithoutExt = originalFi.Name.Replace(originalFi.Extension, string.Empty);
-            string workingFileNameWithoutExt = $"{ fileNameWithoutExt }_{ Guid.NewGuid() }";
-
-
-            #region rename file
-            // rename source file
-            var OriginalSourceFile = originalFi.FullName;
-            var RenamedSourceFile = Path.Combine(originalFi.DirectoryName ?? string.Empty, workingFileNameWithoutExt + source_with_sig_enc_ext_base64);
-
-
-            try
-            {
-                File.Move(FilePath, RenamedSourceFile);
-            }
-            catch (IOException io)
-            {
-                throw new Exception($"IOException: Unexpected IO error: {io.Message}");
-            }
-            catch (UnauthorizedAccessException)
-            {
-                throw new Exception("UnauthorizedAccessException: No permission to rename file");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Unexpected Error: {ex.Message}");
-            }
-            #endregion
-
-
-            List<string> toBeCleanUpfiles = new List<string>();
-
-            var workingFi = new FileInfo(RenamedSourceFile);
-
-
-            try
-            {
-                var encrypted_File = $"{ workingFileNameWithoutExt + source_with_sig_enc_ext}";
-                var encrypted_file_Path = workingFi.FullName.Replace(workingFi.Name, encrypted_File);
-
-
-                toBeCleanUpfiles.Add(encrypted_file_Path);
-
-                try
-                {
-                    using (FileStream inputFile = File.OpenRead(RenamedSourceFile))
-                    using (FileStream outputFile = File.OpenWrite(encrypted_file_Path))
-                    using (CryptoStream cryptoStream = new CryptoStream(inputFile, fromBase64, CryptoStreamMode.Read))
-                    {
-                        cryptoStream.CopyTo(outputFile, 4096);
-                    }
-                }
-                catch
-                {
-                    throw new Exception("Error during decoding base-64 file");
-                }
-
-
-
-                #region setup -- extract from file
-
-                byte[] storedSig = new byte[new HMACSHA512().HashSize / 8];
-
-                authKeySalt = new byte[PasswordSaltByteSize];
-                keySalt = new byte[PasswordSaltByteSize];
-                iv = new byte[AesBlockByteSize];
-                iterationNumber = new byte[IterationNumberByteSize];
-
-                #endregion
-
-                //
-                // pattern: SignatureByteSize + authKeySalt + keySalt + iv + cipherText
-                // read from encrypted file: SignatureByteSize + authKeySalt + keySalt + iv
-                // compute the signature of the cipherText
-                //
-
-                using (FileStream inStream = File.OpenRead(encrypted_file_Path))
-                {
-                    // Read in the storedHash.
-                    await inStream.ReadAsync(storedSig, 0, storedSig.Length);
-                    await inStream.ReadAsync(authKeySalt, 0, authKeySalt.Length);
-                    await inStream.ReadAsync(keySalt, 0, keySalt.Length);
-                    await inStream.ReadAsync(iv, 0, iv.Length);
-                    await inStream.ReadAsync(iterationNumber, 0, iterationNumber.Length);
-
-                    try
-                    {
-                        PasswordIterationCount = BinaryPrimitives.ReadInt32BigEndian(iterationNumber);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception($"Bad data for iteration number: {ex.Message}");
-                    }
-
-
-                    try
-                    {
-                        key = GetKey(Password, keySalt);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception($"Bad data for key creation: {ex.Message}");
-                    }
-
-                    try
-                    {
-                        authKey = GetKey(Password, authKeySalt);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception($"Bad data for signature key creation: {ex.Message}");
-                    }
-
-                    try
-                    {
-                        decryptor = aes.CreateDecryptor(key, iv);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception($"Bad data for decryptor creation: {ex.Message}");
-                    }
-
-                    //SetupAes(Password, false);
-
-                    byte[] computedHash;
-
-                    computedHash = await inStream.HMACSHA512(authKey, inStream.Position);
-
-                    for (int i = 0; i < storedSig.Length; i++)
-                    {
-                        if (computedHash[i] != storedSig[i])
-                        {
-                            throw new Exception("Encrypted file integrity failed: Signature not matched");
-                        }
-                    }
-
-
-                    byte[] header = MergeArrays(storedSig, authKeySalt, keySalt, iv, iterationNumber);
-
-                    var decrypted_File = $"{ workingFileNameWithoutExt + source_with_sig_ext}";
-                    var decrypted_FilePath = workingFi.FullName.Replace(workingFi.Name, decrypted_File);
-
-                    toBeCleanUpfiles.Add(decrypted_FilePath);
-
-                    using (var decryptedFileStream = File.Create(decrypted_FilePath))
-                    using (var decryptCryptoStream = new CryptoStream(inStream, decryptor, CryptoStreamMode.Read))
-                    {
-                        inStream.Position = header.Length;
-                        await decryptCryptoStream.CopyToAsync(decryptedFileStream);
-                    }
-
-                    using (HMACSHA512 hmac = new HMACSHA512(authKey))
-                    {
-                        // Create an array to hold the keyed hash value read from the file.
-                        byte[] storedPlainHash = new byte[hmac.HashSize / 8];
-                        // Create a FileStream for the source file.
-                        using (FileStream sourceFileWithSig = File.OpenRead(decrypted_FilePath))
-                        {
-                            // Read in the storedHash.
-                            await sourceFileWithSig.ReadAsync(storedPlainHash, 0, storedPlainHash.Length);
-                            // Compute the hash of the remaining contents of the file.
-                            // The stream is properly positioned at the beginning of the content, 
-                            // immediately after the stored hash value.
-                            byte[] computedPlainHash; // = hmac.ComputeHash(inStream);
-
-                            computedPlainHash = await sourceFileWithSig.HMACSHA512(authKey, sourceFileWithSig.Position);
-                            // compare the computed hash with the stored value
-
-                            for (int i = 0; i < storedPlainHash.Length; i++)
-                            {
-                                if (computedPlainHash[i] != storedPlainHash[i])
-                                {
-                                    throw new Exception("File integrity failed: Signature not matched");
-
-                                }
-                            }
-
-                            var final_decrypted_File = $"{ workingFileNameWithoutExt + source_ext}";
-                            var final_decrypted_FilePath = workingFi.FullName.Replace(workingFi.Name, final_decrypted_File);
-
-
-                            using (var finalDecryptedFileStream = File.Create(final_decrypted_FilePath))
-                            {
-                                sourceFileWithSig.Position = storedPlainHash.Length;
-                                await sourceFileWithSig.CopyToAsync(finalDecryptedFileStream);
-
-                            }
-
-                            RenameToOriginalFile(final_decrypted_FilePath, FilePath);
-
-                            result.Success = true;
-                            result.OldFilePath = RenamedSourceFile;
-                            result.NewFIlePath = FilePath;
-
-                        }
-                    }
-
-
-                }
-
-            }
-            catch
-            {
-                RenameToOriginalFile(RenamedSourceFile, FilePath);
-
-                result.Success = false;
-                result.OldFilePath = FilePath;
-                result.NewFIlePath = FilePath;
-
-                throw;
-            }
-            finally
-            {
-                CleanUp(toBeCleanUpfiles);
-            }
-
-            return result;
-        }
-
         byte[] GenerateRandomBytes(int numberOfBytes)
         {
             var randomBytes = new byte[numberOfBytes];
@@ -805,34 +799,5 @@ namespace EncryptionLib
             }
         }
 
-        //byte[] GenerateFixBytes(int numberOfBytes)
-        //{
-        //    var randomBytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-
-        //    return randomBytes;
-        //}
-
-        Aes CreateAes()
-        {
-            var aes = Aes.Create();
-            aes.Mode = CipherMode.CBC;
-            aes.Padding = PaddingMode.PKCS7;
-            return aes;
-        }
-
-        private static byte[] MergeArrays(params byte[][] arrays)
-        {
-            var merged = new byte[arrays.Sum(a => a.Length)];
-            var mergeIndex = 0;
-            for (int i = 0; i < arrays.GetLength(0); i++)
-            {
-                arrays[i].CopyTo(merged, mergeIndex);
-                mergeIndex += arrays[i].Length;
-            }
-
-            return merged;
-        }
-
     }
-
 }

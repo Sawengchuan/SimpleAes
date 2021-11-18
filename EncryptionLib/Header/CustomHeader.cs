@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EncryptionLib
+namespace EncryptionLib.Header
 {
     internal class CustomHeader : IHeaderStrategy
     {
@@ -28,7 +28,7 @@ namespace EncryptionLib
         }
         public byte[][] GenerateHeader(params byte[][] secrets)
         {
-            int MaxSlot = RandomNumberGenerator.GetInt32(10, 100);
+            int MaxSlot = RandomNumberGenerator.GetInt32(5, 10);
 
             if (secrets.Length < 1)
                 return null;
@@ -104,7 +104,7 @@ namespace EncryptionLib
             return header.ToArray();
         }
 
-        public byte[][] ReadHeader(Stream stream)
+        public HeaderProfile ReadHeader(Stream stream)
         {
             List<byte[]> list = new List<byte[]>();
 
@@ -121,7 +121,7 @@ namespace EncryptionLib
             }
 
 
-            return list.ToArray();
+            return new HeaderProfile();
         }
 
         static Dictionary<string, byte> GetNumberDict(byte[] hashKey)

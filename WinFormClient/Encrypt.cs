@@ -6,6 +6,8 @@ namespace WinFormClient
     {
         TableLayoutPanel tblTable = new TableLayoutPanel();
 
+        EncryptionLib.Encryptor.ISymmetricEncryptor aes;
+
         public Encrypt()
         {
             InitializeComponent();
@@ -15,6 +17,8 @@ namespace WinFormClient
 
             tblTable.Dock = DockStyle.Fill;
             groupBox1.Controls.Add(tblTable);
+
+            aes = new EncryptionLib.Encryptor.AesEncryptor();
         }
 
         private void btnOpenFile_Click(object sender, EventArgs e)
@@ -38,8 +42,6 @@ namespace WinFormClient
 
             if (!string.IsNullOrEmpty(FileName?.Trim()) && !string.IsNullOrEmpty(Password?.Trim()))
             {
-                AesEncryptor aes = new();
-
                 try
                 {
                     var result = await aes.EncryptFile(FileName, Password);

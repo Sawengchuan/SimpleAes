@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EncryptionLib.Header;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -20,7 +21,7 @@ namespace EncryptionLib
         {
             return headerStrategy.GenerateHeader(vs);
         }
-        public static byte[][] ReadHeader(Stream stream)
+        public static HeaderProfile ReadHeader(Stream stream)
         {
             return headerStrategy.ReadHeader(stream);
         }

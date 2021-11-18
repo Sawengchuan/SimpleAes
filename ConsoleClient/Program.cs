@@ -44,8 +44,8 @@ try
         dict.Add(BitConverter.ToString(hmac.ComputeHash(new byte[] { b })), b);
     }
 
-    byte b99 = 99;
-    var b99Hash = BitConverter.ToString(hmac.ComputeHash(new byte[] { 99 }));
+    byte b99 = 129;
+    var b99Hash = BitConverter.ToString(hmac.ComputeHash(new byte[] { b99 }));
 
     var value = dict[b99Hash];
 
@@ -54,19 +54,56 @@ try
     var b2 = new byte[] { 11, 12, 13, 14 };
     var b3 = new byte[] { 21, 22, 23, 24, 25 };
 
-    var resultt = HeaderHelper.GenerateHeader(10, b1, b2, b3);
+    var resultt = HeaderHelper.GenerateHeader(200, b1, b2, b3);
 
-    var totalXtra = resultt.Sum( b => b.Length );
 
+    var aggByteSpan = resultt.Aggregate((x, y) =>
+    {
+        var agg = new byte[x.Length + y.Length];
+
+        var span = new Span<byte>(agg);
+
+        x.AsSpan().CopyTo(span.Slice(0));
+        y.AsSpan().CopyTo(span.Slice(x.Length));
+
+        return agg;
+    });
+
+
+
+    var aggByte = resultt.Aggregate((x, y) =>
+    {
+        var agg = new byte[x.Length + y.Length];
+        x.CopyTo(agg, 0);
+        y.CopyTo(agg, x.Length);
+
+        return agg;
+    });
+
+
+
+
+    // span foreach loop way
+    var totalXtra = resultt.Sum(b => b.Length);
     var merged = new byte[totalXtra];
+    var span = new Span<byte>(merged);
 
     int runningIndex = 0;
-    foreach(var x in resultt)
+    foreach (var x in resultt)
     {
-        x.CopyTo(merged, runningIndex);
+        //x.CopyTo(merged, runningIndex);
+
+        x.AsSpan().CopyTo(span.Slice(runningIndex, x.Length));
+
         runningIndex += x.Length;
 
     }
+    // span old way
+
+    for (int i = 0; i < resultt.Length; i++)
+        resultt.AsSpan()[i..1][0].CopyTo(merged, i);
+
+    //resultt.Aggregate()
 
 
 

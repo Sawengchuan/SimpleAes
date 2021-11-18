@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.btnGoCredit = new System.Windows.Forms.Button();
             this.btnAbout = new System.Windows.Forms.Button();
@@ -136,6 +137,7 @@
             this.ClientSize = new System.Drawing.Size(884, 441);
             this.Controls.Add(this.splitContainer1);
             this.ForeColor = System.Drawing.Color.LawnGreen;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(750, 480);
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
