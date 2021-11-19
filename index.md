@@ -22,8 +22,7 @@ the Developer be held responsible or liable in any way for any claims, damages, 
 I have no liability to you for any loss of profit, loss of business, business interruption, or loss of business opportunity.
 
 ## Privacy Policy
-No data will be collected, period
-Zero.
+No data will be collected, period.
 
 ## Acknowledgments
 - https://www.clipartmax.com
