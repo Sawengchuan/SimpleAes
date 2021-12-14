@@ -43,7 +43,6 @@ namespace WinFormClient
             {
                 try
                 {
-
                     var result = await aes.DecryptFile(FileName, Password);
 
                     TableDrawerHelper.Draw(groupBox2, tblTable, result);

@@ -1,4 +1,5 @@
 ﻿using EncryptionLib.Header;
+using EncryptionLib.PasswordHashing;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -28,17 +29,24 @@ namespace EncryptionLib.Encryptor
 
         internal const int SignatureByteSize = 512 / 8;
 
+        internal const int HeaderIDByteSize = 1; // size in byte
+
+
+        internal const int MinimumIterationNumber = 60_000;
+        internal const int MaximumIterationNumber = 120_000;
+
 
         private const int MinimumEncryptedMessageByteSize =
+            HeaderIDByteSize +
+            SignatureByteSize + // signature tag
             PasswordSaltByteSize + // auth salt
             PasswordSaltByteSize + // key salt
             AesBlockByteSize + // IV
             IterationNumberByteSize + // Iteration Number
-            AesBlockByteSize + // cipher text min length
-            SignatureByteSize; // signature tag
+            AesBlockByteSize;// cipher text min length
 
-        private static readonly Encoding StringEncoding = Encoding.UTF8;
-        private static readonly RandomNumberGenerator Random = RandomNumberGenerator.Create();
+        private readonly Encoding StringEncoding = Encoding.UTF8;
+        private readonly RandomNumberGenerator Random = RandomNumberGenerator.Create();
 
         private byte[] keySalt { get; set; }
         private byte[] key { get; set; }
@@ -48,8 +56,8 @@ namespace EncryptionLib.Encryptor
         private byte[] authKeySalt { get; set; }
         private byte[] authKey { get; set; }
 
-        private readonly ICryptoTransform toBase64;
-        private readonly ICryptoTransform fromBase64;
+        private ICryptoTransform toBase64;
+        private ICryptoTransform fromBase64;
 
         private Aes aes;
         private ICryptoTransform encryptor;
@@ -61,14 +69,15 @@ namespace EncryptionLib.Encryptor
         const string source_with_sig_enc_ext_base64 = ".source_with_sig_encrypted_64";
 
         int PasswordIterationCount;
+
+        IPasswordHashingStrategy passwordHashing;
+
         public AesEncryptor()
         {
-            toBase64 = new ToBase64Transform();
-            fromBase64 = new FromBase64Transform();
-            aes = CreateAes();
-
             //PasswordIterationCount = DefaultPasswordIterationCount;
-            PasswordIterationCount = RandomNumberGenerator.GetInt32(10_000, 100_000);
+            PasswordIterationCount = RandomNumberGenerator.GetInt32(MinimumIterationNumber, MaximumIterationNumber);
+
+            passwordHashing = new Rfc2898Hashing(PasswordIterationCount, HashAlgorithmName.SHA256, PasswordByteSize);
         }
 
         Aes CreateAes()
@@ -81,6 +90,11 @@ namespace EncryptionLib.Encryptor
 
         public async Task<Result> DecryptFile(string FilePath, string Password)
         {
+            aes = CreateAes();
+            toBase64 = new ToBase64Transform();
+            fromBase64 = new FromBase64Transform();
+
+
             Result result = new Result();
             result.CryptoOp = CryptoOp.Decrypt;
 
@@ -163,11 +177,6 @@ namespace EncryptionLib.Encryptor
 
                 #endregion
 
-                //
-                // pattern: SignatureByteSize + authKeySalt + keySalt + iv + cipherText
-                // read from encrypted file: SignatureByteSize + authKeySalt + keySalt + iv + iteration number
-                // compute the signature of the cipherText
-                //
 
                 using (FileStream inStream = File.OpenRead(encrypted_file_Path))
                 {
@@ -178,7 +187,7 @@ namespace EncryptionLib.Encryptor
                     //await inStream.ReadAsync(iv, 0, iv.Length);
                     //await inStream.ReadAsync(iterationNumber, 0, iterationNumber.Length);
 
-                    var profile = await HeaderHelper.ReadHeader(inStream);
+                    var profile = await AesHeaderHelper.ReadHeader(inStream);
 
                     storedSig = profile.StoredSig;
                     authKeySalt = profile.AuthKeySalt;
@@ -191,11 +200,16 @@ namespace EncryptionLib.Encryptor
                     try
                     {
                         PasswordIterationCount = BinaryPrimitives.ReadInt32BigEndian(iterationNumber);
+
+                        if (PasswordIterationCount < MinimumIterationNumber || PasswordIterationCount > MaximumIterationNumber)
+                            throw new Exception("Bad data for iteration number");
                     }
                     catch (Exception ex)
                     {
-                        throw new Exception($"Bad data for iteration number: {ex.Message}");
+                        throw new Exception($"Error in iteration number: {ex.Message}");
                     }
+
+                    passwordHashing = new Rfc2898Hashing(PasswordIterationCount, HashAlgorithmName.SHA256, PasswordByteSize);
 
 
                     try
@@ -231,16 +245,12 @@ namespace EncryptionLib.Encryptor
 
                     computedHash = await inStream.HMACSHA512(authKey, inStream.Position);
 
-                    for (int i = 0; i < storedSig.Length; i++)
-                    {
-                        if (computedHash[i] != storedSig[i])
-                        {
-                            throw new Exception("Encrypted file integrity failed: Signature not matched");
-                        }
-                    }
+                    if (!storedSig.SequenceEqual(computedHash))
+                        throw new Exception("Encrypted file integrity failed: Signature not matched");
 
 
-                    byte[] header = HeaderHelper.GenerateHeader(profile);
+
+                    byte[] header = AesHeaderHelper.GenerateHeader(profile);
 
                     var decrypted_File = $"{ workingFileNameWithoutExt + source_with_sig_ext}";
                     var decrypted_FilePath = workingFi.FullName.Replace(workingFi.Name, decrypted_File);
@@ -269,16 +279,13 @@ namespace EncryptionLib.Encryptor
                             byte[] computedPlainHash; // = hmac.ComputeHash(inStream);
 
                             computedPlainHash = await sourceFileWithSig.HMACSHA512(authKey, sourceFileWithSig.Position);
+
+
                             // compare the computed hash with the stored value
 
-                            for (int i = 0; i < storedPlainHash.Length; i++)
-                            {
-                                if (computedPlainHash[i] != storedPlainHash[i])
-                                {
-                                    throw new Exception("File integrity failed: Signature not matched");
+                            if (!computedPlainHash.SequenceEqual(storedPlainHash))
+                                throw new Exception("File integrity failed: Signature not matched");
 
-                                }
-                            }
 
                             var final_decrypted_File = $"{ workingFileNameWithoutExt + source_ext}";
                             var final_decrypted_FilePath = workingFi.FullName.Replace(workingFi.Name, final_decrypted_File);
@@ -324,6 +331,11 @@ namespace EncryptionLib.Encryptor
 
         public async Task<Result> EncryptFile(string FilePath, string Password)
         {
+            aes = CreateAes();
+            toBase64 = new ToBase64Transform();
+            fromBase64 = new FromBase64Transform();
+
+
             List<string> toBeCleanUpfiles = new List<string>();
 
             Result result = new Result();
@@ -341,22 +353,11 @@ namespace EncryptionLib.Encryptor
                 VerifyFilePath(originalFi);
                 VerifyPassword(Password);
 
-                PasswordIterationCount = RandomNumberGenerator.GetInt32(10_000, 100_000);
+                PasswordIterationCount = RandomNumberGenerator.GetInt32(MinimumIterationNumber, MaximumIterationNumber);
+
+                passwordHashing = new Rfc2898Hashing(PasswordIterationCount, HashAlgorithmName.SHA256, PasswordByteSize);
+
                 SetupAes(Password);
-
-
-
-                /*
-                 * target final pattern of the encrypted file
-                 
-
-
-                var result = MergeArrays(
-                    additionalCapacity: SignatureByteSize,
-                    authKeySalt, keySalt, iv, IterationNumber, cipherText);
-
-
-                */
 
 
                 ///
@@ -517,7 +518,7 @@ namespace EncryptionLib.Encryptor
 
                     //byte[] header = MergeArrays(cipherTextSignature, authKeySalt, keySalt, iv, iterationNumber);
 
-                    HeaderProfile profile = new HeaderProfile 
+                    AesHeaderProfile profile = new AesHeaderProfile 
                     { 
                         AuthKeySalt = authKeySalt, 
                         Iteration = iterationNumber, 
@@ -526,7 +527,7 @@ namespace EncryptionLib.Encryptor
                         StoredSig = cipherTextSignature 
                     };
 
-                    var header = HeaderHelper.GenerateHeader(profile);
+                    var header = AesHeaderHelper.GenerateHeader(profile);
 
 
                     //finalEncryptedFileWithHeader.Write(header);
@@ -795,14 +796,7 @@ namespace EncryptionLib.Encryptor
 
         byte[] GetKey(string password, byte[] passwordSalt)
         {
-            var keyBytes = StringEncoding.GetBytes(password);
-
-            using (var derivator = new Rfc2898DeriveBytes(
-                keyBytes, passwordSalt,
-                PasswordIterationCount, HashAlgorithmName.SHA256))
-            {
-                return derivator.GetBytes(PasswordByteSize);
-            }
+            return passwordHashing.Get(password, passwordSalt);
         }
 
     }

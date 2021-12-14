@@ -7,6 +7,7 @@ namespace WinFormClient
         Encrypt encrypt = new Encrypt() { TopLevel = false };
         Decrypt decrypt = new Decrypt() { TopLevel = false };
         Credit credit = new Credit() { TopLevel = false };
+        DebugInfo debugInfo = new DebugInfo() { TopLevel = false };
 
         public Form1()
         {
@@ -76,6 +77,11 @@ namespace WinFormClient
         private void btnGoCredit_Click(object sender, EventArgs e)
         {
             LoadForm(pnlContent, credit);
+        }
+
+        private void btnGoDebug_Click(object sender, EventArgs e)
+        {
+            LoadForm(pnlContent, debugInfo);
         }
     }
 }

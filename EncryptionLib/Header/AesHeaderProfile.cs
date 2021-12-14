@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EncryptionLib.Header
 {
-    public class HeaderProfile
+    public class AesHeaderProfile
     {
         public byte[] AuthKeySalt { get; set; }
         public byte[] KeySalt { get; set; }

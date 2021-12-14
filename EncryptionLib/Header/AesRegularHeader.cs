@@ -8,7 +8,7 @@ using EncryptionLib.Encryptor;
 
 namespace EncryptionLib.Header
 {
-    internal class AesRegularHeader : IHeaderStrategy
+    internal class AesRegularHeader : IAesHeaderStrategy
     {
         //
         // pattern: HeaderID + SignatureByteSize + authKeySalt + keySalt + iv + cipherText
@@ -19,7 +19,8 @@ namespace EncryptionLib.Header
         private int PasswordSaltByteSize = EncryptionLib.Encryptor.AesEncryptor.PasswordSaltByteSize;
         private int IterationNumberByteSize = EncryptionLib.Encryptor.AesEncryptor.IterationNumberByteSize;
 
-        public const byte ID = 200;
+        internal const byte ID = 200;
+        internal const int HeaderIDByteSize = 1; // size in byte
 
         HMACSHA512 hmac = new HMACSHA512();
         byte[] GenerateHeader(params byte[][] vs)
@@ -30,7 +31,7 @@ namespace EncryptionLib.Header
             return MergeArrays(vs);
         }
 
-        public byte[] GenerateHeader(HeaderProfile profile)
+        public byte[] GenerateHeader(AesHeaderProfile profile)
         {
             if (profile == null)
                 throw new ArgumentNullException(nameof(profile));
@@ -61,15 +62,30 @@ namespace EncryptionLib.Header
             return GenerateHeader(new byte[] { ID }, profile.StoredSig, profile.AuthKeySalt, profile.KeySalt, profile.IV, profile.Iteration);
         }
 
-        public async Task<HeaderProfile> ReadHeader(Stream stream)
+        public async Task<AesHeaderProfile> ReadHeader(Stream stream)
         {
-            if(stream == null || !stream.CanSeek || !stream.CanRead)
+            if (stream == null)
                 throw new ArgumentNullException("stream");
 
             if (!stream.CanSeek || !stream.CanRead)
                 throw new Exception("Read header: Invalid stream - cannot read/seek");
 
-            var profile = new HeaderProfile();
+            int MinimumEncryptedMessageByteSize =
+                        HeaderIDByteSize +    // ID size
+                        hmac.HashSize / 8 + // signature tag
+                        PasswordSaltByteSize + // auth salt
+                        PasswordSaltByteSize + // key salt
+                        AesBlockByteSize + // IV
+                        IterationNumberByteSize; // Iteration Number
+
+
+            if (stream.Length < MinimumEncryptedMessageByteSize)
+            {
+                throw new ArgumentException("Invalid length of header data");
+            }
+
+
+            var profile = new AesHeaderProfile();
 
             byte[] storedSig = new byte[hmac.HashSize / 8];
             byte[] authKeySalt = new byte[PasswordSaltByteSize];
@@ -78,7 +94,7 @@ namespace EncryptionLib.Header
             byte[] iterationNumber = new byte[IterationNumberByteSize];
 
 
-            stream.Position = 1;
+            stream.Position = HeaderIDByteSize;
             await stream.ReadAsync(storedSig, 0, storedSig.Length);
             await stream.ReadAsync(authKeySalt, 0, authKeySalt.Length);
             await stream.ReadAsync(keySalt, 0, keySalt.Length);

@@ -35,6 +35,7 @@
             this.btnGoDecrypt = new System.Windows.Forms.Button();
             this.btnGoEncrypt = new System.Windows.Forms.Button();
             this.pnlContent = new System.Windows.Forms.Panel();
+            this.btnGoDebug = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -53,6 +54,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.btnGoDebug);
             this.splitContainer1.Panel1.Controls.Add(this.btnGoCredit);
             this.splitContainer1.Panel1.Controls.Add(this.btnAbout);
             this.splitContainer1.Panel1.Controls.Add(this.btnGoDecrypt);
@@ -129,6 +131,20 @@
             this.pnlContent.Size = new System.Drawing.Size(623, 221);
             this.pnlContent.TabIndex = 8;
             // 
+            // btnGoDebug
+            // 
+            this.btnGoDebug.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnGoDebug.FlatAppearance.BorderSize = 2;
+            this.btnGoDebug.FlatAppearance.MouseOverBackColor = System.Drawing.Color.DarkGreen;
+            this.btnGoDebug.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnGoDebug.Location = new System.Drawing.Point(11, 314);
+            this.btnGoDebug.Name = "btnGoDebug";
+            this.btnGoDebug.Size = new System.Drawing.Size(95, 34);
+            this.btnGoDebug.TabIndex = 4;
+            this.btnGoDebug.Text = "Debug";
+            this.btnGoDebug.UseVisualStyleBackColor = true;
+            this.btnGoDebug.Click += new System.EventHandler(this.btnGoDebug_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -159,5 +175,6 @@
         private Button btnAbout;
         private Panel pnlContent;
         private Button btnGoCredit;
+        private Button btnGoDebug;
     }
 }

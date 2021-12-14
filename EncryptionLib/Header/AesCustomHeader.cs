@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 
 namespace EncryptionLib.Header
 {
-    internal class AesCustomHeader : IHeaderStrategy
+    internal class AesCustomHeader : IAesHeaderStrategy
     {
-        public const byte ID = 201;
+        internal const byte ID = 201;
+        internal const int HeaderIDByteSize = 1; // size in byte
         struct SlotData
         {
             public byte Size;
@@ -116,7 +117,7 @@ namespace EncryptionLib.Header
             //return header.ToArray();
         }
 
-        public async Task<HeaderProfile> ReadHeader(Stream stream)
+        public async Task<AesHeaderProfile> ReadHeader(Stream stream)
         {
             List<byte[]> list = new List<byte[]>();
 
@@ -133,7 +134,7 @@ namespace EncryptionLib.Header
             }
 
 
-            return new HeaderProfile();
+            return new AesHeaderProfile();
         }
 
         static Dictionary<string, byte> GetNumberDict(byte[] hashKey)
@@ -153,7 +154,7 @@ namespace EncryptionLib.Header
 
         }
 
-        public byte[] GenerateHeader(HeaderProfile profile)
+        public byte[] GenerateHeader(AesHeaderProfile profile)
         {
             throw new NotImplementedException();
         }
