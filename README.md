@@ -24,6 +24,13 @@ I have no liability to you for any loss of profit, loss of business, business in
 No data will be collected, period.
 This program doesn't even need internet connection to function.
 
+# Store
+Store ID: 9PLQGMR8HDM2
+
+URL: https://www.microsoft.com/store/apps/9PLQGMR8HDM2
+
+Store protocol link: ms-windows-store://pdp/?productid=9PLQGMR8HDM2
+
 
 # Acknowledgments
 https://www.clipartmax.com
