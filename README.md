@@ -12,6 +12,14 @@ Only password and file path needed for encryption and decryption function.
 This program will also be submitted to Windows Store as UWP App, using Windows Application Packaging Project, as part of the .net 6 learning process.
 
 
+# Store
+Store ID: 9PLQGMR8HDM2
+
+URL: https://www.microsoft.com/store/apps/9PLQGMR8HDM2
+
+Store protocol link: ms-windows-store://pdp/?productid=9PLQGMR8HDM2
+
+
 # Disclaimer
 The program is provided free of charge.
 
@@ -23,13 +31,6 @@ I have no liability to you for any loss of profit, loss of business, business in
 # Privacy Policy
 No data will be collected, period.
 This program doesn't even need internet connection to function.
-
-# Store
-Store ID: 9PLQGMR8HDM2
-
-URL: https://www.microsoft.com/store/apps/9PLQGMR8HDM2
-
-Store protocol link: ms-windows-store://pdp/?productid=9PLQGMR8HDM2
 
 
 # Acknowledgments
